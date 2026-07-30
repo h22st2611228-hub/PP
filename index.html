@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="기상청 실시간 관측 데이터 및 체감온도 수식을 기반으로 최적의 오늘의 옷차림(OOTD)을 여성/남성 스타일별로 예측해주는 AI 코디네이터">
+  <title>오늘 옷 어떻게 입지? AI 코디네이터 (OOTD Predictor)</title>
+
+  <!-- Google Web Fonts (Pretendard 지원) -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- 메인 스타일시트 -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 전체 앱 컨테이너 -->
+  <div class="app-container">
+
+    <!-- 위치 알림 배너 -->
+    <div id="locationNoticeBanner" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; padding: 12px 16px; font-size: 0.85rem; color: #b91c1c; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem;">⚠️</span>
+        <span id="noticeText">위치 권한 제약으로 선택된 도시 날씨를 안내합니다.</span>
+      </div>
+      <button onclick="document.getElementById('locationNoticeBanner').style.display='none'" style="background: none; border: none; color: #b91c1c; font-weight: bold; cursor: pointer; font-size: 1rem;">✕</button>
+    </div>
+
+    <!-- 1. 헤더 영역 -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">👔</div>
+        <div class="logo-title">
+          <h1>OOTD Predictor</h1>
+          <p>오늘 옷 어떻게 입지? AI 코디네이터</p>
+        </div>
+      </div>
+
+      <div class="location-controls">
+        <div class="select-wrapper">
+          <select id="citySelect" aria-label="도시 선택">
+            <option value="Seoul">서울특별시</option>
+            <option value="Busan">부산광역시</option>
+            <option value="Incheon">인천광역시</option>
+            <option value="Daegu">대구광역시</option>
+            <option value="Daejeon">대전광역시</option>
+            <option value="Gwangju">광주광역시</option>
+            <option value="Ulsan">울산광역시</option>
+            <option value="Jeju">제주특별자치도</option>
+            <option value="Gangneung">강원도 강릉시</option>
+          </select>
+        </div>
+
+        <!-- 내 위치 GPS 버튼 -->
+        <button id="gpsBtn" class="btn-gps" title="내 위치 기반 날씨 찾기">
+          <i data-lucide="map-pin" style="width: 16px; height: 16px;"></i>
+          <span>내 위치</span>
+        </button>
+
+        <!-- 🔄 Refresh 버튼 -->
+        <button id="refreshBtn" class="btn-gps" style="background: linear-gradient(135deg, #10b981, #059669);" title="기상청 최신 관측 데이터 새로고침">
+          <i data-lucide="rotate-cw" style="width: 16px; height: 16px;"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. 탭(Tab) 서브 네비게이션 메뉴 -->
+    <nav class="tab-navigation">
+      <button class="tab-btn active" data-tab="tab-weather">
+        <i data-lucide="cloud-sun" style="width: 18px; height: 18px;"></i>
+        <span>실시간 날씨</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-comfort">
+        <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+        <span>체감 쾌적도</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-ootd">
+        <i data-lucide="shirt" style="width: 18px; height: 18px;"></i>
+        <span>추천 옷차림</span>
+      </button>
+    </nav>
+
+    <!-- 3. 탭별 메인 컨텐츠 영역 -->
+
+    <!-- TAB 1: 실시간 날씨 데이터 -->
+    <section id="tab-weather" class="tab-content active">
+      <article class="glass-card">
+        <div class="card-header">
+          <span class="card-title">
+            <i data-lucide="cloud-sun" style="width: 20px; height: 20px; color: #0284c7;"></i>
+            기상청 실시간 관측 데이터
+          </span>
+          <span id="currentLocationName" style="font-size: 0.88rem; color: #0284c7; font-weight: 700;">우리동네</span>
+        </div>
+
+        <!-- 기상청 데이터 연동 상태 뱃지 -->
+        <div id="kmaStatusBadge" style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; color: #0369a1; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+          <span>📡</span>
+          <span id="kmaStatusText">기상청 초단기실측 서버 연동 중...</span>
+        </div>
+
+        <div class="weather-main">
+          <div>
+            <div class="temp-large"><span id="tempValue">--</span>°</div>
+          </div>
+          <div class="weather-desc-box">
+            <div class="weather-status" id="weatherText">관측 중</div>
+            <div class="sensory-temp" style="color: #d97706; font-weight: 700;">
+              체감온도 <span id="feelsLikeValue">--</span>°C
+            </div>
+            <!-- 체감온도 산출 공식 보기 작은 버튼 -->
+            <button id="openFormulaModalBtn" class="btn-formula" title="체감온도 계산 공식 안내">
+              <span>ⓘ 공식 보기</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="weather-details-grid">
+          <div class="detail-item">
+            <span class="detail-label">상대습도 (REH)</span>
+            <span class="detail-value"><span id="humidityValue">--</span>%</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">풍속 (WSD)</span>
+            <span class="detail-value"><span id="windValue">--</span> m/s</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">미세먼지</span>
+            <span class="detail-value" id="pm10Value">보통</span>
+            <span class="pm-badge pm-moderate" id="pmBadge">25 ㎛/m³</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- TAB 2: 체감 쾌적도 & AI 브리핑 -->
+    <section id="tab-comfort" class="tab-content">
+      <article class="glass-card">
+        <div class="card-header">
+          <span class="card-title">
+            <i data-lucide="sparkles" style="width: 20px; height: 20px; color: #d97706;"></i>
+            오늘의 체감 쾌적도 점수
+          </span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">종합 지수</span>
+        </div>
+
+        <div class="comfort-score-container">
+          <div class="circle-gauge">
+            <svg class="gauge-svg" viewBox="0 0 160 160">
+              <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
+              <circle id="gaugeProgress" class="gauge-progress" cx="80" cy="80" r="70"></circle>
+            </svg>
+            <div class="gauge-text">
+              <span class="score-number" id="comfortScore">--</span>
+              <span class="score-unit">/ 100 점</span>
+            </div>
+          </div>
+
+          <div class="comfort-summary">
+            <span class="comfort-status-tag" id="comfortStatusTag" style="background: #d1fae5; color: var(--score-excellent);">
+              쾌적함 😊
+            </span>
+            <p class="comfort-desc" id="comfortDesc">
+              기상청 관측 수치를 바탕으로 체감 쾌적도를 실시간 산출합니다.
+            </p>
+          </div>
+        </div>
+
+        <!-- AI 스마트 브리핑 카드 -->
+        <div class="ai-briefing-card">
+          <div class="ai-avatar">🤖</div>
+          <div class="ai-content">
+            <h3>AI 코디네이터의 오늘의 한줄 팁</h3>
+            <p id="aiStylistTip">
+              "기상청 데이터를 분석하고 있습니다..."
+            </p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- TAB 3: 추천 옷차림 (OOTD) -->
+    <section id="tab-ootd" class="tab-content">
+
+      <!-- 여성 / 남성 / 공용 성별 선택 스위치 -->
+      <div class="gender-toggle-container">
+        <button class="gender-btn active" data-gender="all">
+          <span>✨ 남녀 공용</span>
+        </button>
+        <button class="gender-btn" data-gender="female">
+          <span>👩 여성 추천 코디</span>
+        </button>
+        <button class="gender-btn" data-gender="male">
+          <span>👨 남성 추천 코디</span>
+        </button>
+      </div>
+
+      <div class="ootd-grid">
+        <!-- 상의 추천 -->
+        <article class="ootd-card ootd-top">
+          <span class="ootd-badge">Top / 상의</span>
+          <ul class="ootd-items-list" id="topClothingList">
+            <li><span>👕</span> 반팔 티셔츠</li>
+          </ul>
+          <p class="ootd-tip-text" id="topTip">상세 가이드를 불러오는 중입니다.</p>
+        </article>
+
+        <!-- 하의 추천 -->
+        <article class="ootd-card ootd-bottom">
+          <span class="ootd-badge">Bottom / 하의</span>
+          <ul class="ootd-items-list" id="bottomClothingList">
+            <li><span>👖</span> 슬랙스</li>
+          </ul>
+          <p class="ootd-tip-text" id="bottomTip">상세 가이드를 불러오는 중입니다.</p>
+        </article>
+
+        <!-- 아우터 추천 -->
+        <article class="ootd-card ootd-outer">
+          <span class="ootd-badge">Outer / 아우터</span>
+          <ul class="ootd-items-list" id="outerClothingList">
+            <li><span>🧥</span> 가벼운 가디건</li>
+          </ul>
+          <p class="ootd-tip-text" id="outerTip">상세 가이드를 불러오는 중입니다.</p>
+        </article>
+
+        <!-- 추천 소품/악세서리 -->
+        <article class="ootd-card ootd-acc">
+          <span class="ootd-badge">Item / 필수 소품</span>
+          <ul class="ootd-items-list" id="accClothingList">
+            <li><span>👟</span> 스니커즈</li>
+          </ul>
+          <p class="ootd-tip-text" id="accTip">상세 가이드를 불러오는 중입니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="app-footer">
+      <p>© 2026 OOTD Predictor - 오늘 옷 어떻게 입지? AI 코디네이터 | 기상청 초단기실측 Open API 연동</p>
+    </footer>
+
+  </div>
+
+  <!-- 체감온도 산출 공식 모달 팝업 -->
+  <div id="formulaModal" class="formula-modal-overlay">
+    <div class="formula-modal-card">
+      <div class="formula-header">
+        <h3>🌡️ 체감온도 산출 공식</h3>
+        <button id="closeFormulaModalBtn" class="formula-close-btn" title="닫기">✕</button>
+      </div>
+      <div class="formula-body">
+        <p>본 서비스는 기상청 실시간 관측 수치를 기반으로 한 **여름철 대표 선형회귀 체감온도 방정식**을 사용하여 계산합니다.</p>
+        
+        <div class="formula-equation">
+          AT = 0.85 × T + 0.15 × RH − 0.70 × V − 2.5
+        </div>
+
+        <ul class="formula-variables">
+          <li>• <strong>AT (Apparent Temp)</strong>: 산출된 체감온도 (°C)</li>
+          <li>• <strong>T (Temperature)</strong>: 기상청 실시간 현재기온 (T1H, °C)</li>
+          <li>• <strong>RH (Relative Humidity)</strong>: 기상청 실시간 상대습도 (REH, %)</li>
+          <li>• <strong>V (Wind Speed)</strong>: 기상청 실시간 풍속 (WSD, m/s)</li>
+        </ul>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">
+          * 습도가 높을수록 체감온도가 상승하고, 풍속(바람)이 강할수록 체감온도가 내려가는 영향이 반영됩니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로딩 오버레이 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p style="font-weight: 700; color: #0f172a;">기상청 최신 데이터를 로딩하고 있습니다...</p>
+  </div>
+
+  <!-- 메인 스크립트 -->
+  <script src="app.js"></script>
+</body>
+</html>
