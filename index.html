@@ -200,36 +200,60 @@
       </div>
 
       <div class="ootd-grid">
-        <!-- 상의 추천 -->
+        <!-- 상의 추천 (개별 새로고침 버튼 추가) -->
         <article class="ootd-card ootd-top">
-          <span class="ootd-badge">Top / 상의</span>
+          <div class="ootd-card-header">
+            <span class="ootd-badge">Top / 상의 (2종)</span>
+            <button class="btn-category-refresh" data-category="top" title="다른 상의 추천 보기">
+              <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i>
+              <span>새로고침</span>
+            </button>
+          </div>
           <ul class="ootd-items-list" id="topClothingList">
             <li><span>👕</span> 반팔 티셔츠</li>
           </ul>
           <p class="ootd-tip-text" id="topTip">상세 가이드를 불러오는 중입니다.</p>
         </article>
 
-        <!-- 하의 추천 -->
+        <!-- 하의 추천 (개별 새로고침 버튼 추가) -->
         <article class="ootd-card ootd-bottom">
-          <span class="ootd-badge">Bottom / 하의</span>
+          <div class="ootd-card-header">
+            <span class="ootd-badge">Bottom / 하의 (2종)</span>
+            <button class="btn-category-refresh" data-category="bottom" title="다른 하의 추천 보기">
+              <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i>
+              <span>새로고침</span>
+            </button>
+          </div>
           <ul class="ootd-items-list" id="bottomClothingList">
             <li><span>👖</span> 슬랙스</li>
           </ul>
           <p class="ootd-tip-text" id="bottomTip">상세 가이드를 불러오는 중입니다.</p>
         </article>
 
-        <!-- 아우터 추천 -->
+        <!-- 아우터 추천 (개별 새로고침 버튼 추가) -->
         <article class="ootd-card ootd-outer">
-          <span class="ootd-badge">Outer / 아우터</span>
+          <div class="ootd-card-header">
+            <span class="ootd-badge">Outer / 아우터 (2종)</span>
+            <button class="btn-category-refresh" data-category="outer" title="다른 아우터 추천 보기">
+              <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i>
+              <span>새로고침</span>
+            </button>
+          </div>
           <ul class="ootd-items-list" id="outerClothingList">
             <li><span>🧥</span> 가벼운 가디건</li>
           </ul>
           <p class="ootd-tip-text" id="outerTip">상세 가이드를 불러오는 중입니다.</p>
         </article>
 
-        <!-- 추천 소품/악세서리 -->
+        <!-- 필수 소품 (개별 새로고침 버튼 추가) -->
         <article class="ootd-card ootd-acc">
-          <span class="ootd-badge">Item / 필수 소품</span>
+          <div class="ootd-card-header">
+            <span class="ootd-badge">Item / 필수 소품 (2종)</span>
+            <button class="btn-category-refresh" data-category="acc" title="다른 소품 추천 보기">
+              <i data-lucide="rotate-cw" style="width: 12px; height: 12px;"></i>
+              <span>새로고침</span>
+            </button>
+          </div>
           <ul class="ootd-items-list" id="accClothingList">
             <li><span>👟</span> 스니커즈</li>
           </ul>
